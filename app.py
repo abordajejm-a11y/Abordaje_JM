@@ -23,5 +23,26 @@ def say_hello():
         "message": f"Hello, {name}!"
     })
 
+@app.route('/course')
+def get_course():
+    return jsonify({
+        "course_code": "IT3120",
+        "course_title": "System Integration",
+        "instructor": "Dr. Rene Arduo",
+        "semester": 1,
+        "academic_year": 2026
+    })
+
+@app.route('/grades')
+def get_grades():
+    return jsonify({
+        "student_id": "2024-00111",
+        "grades": {
+            "IT3122": "1.4",
+            "IT3120": "1.5",
+            "ITPE3": "1.3"
+        }
+    })
+
 if __name__ == '__main__':
     app.run(debug=True)
