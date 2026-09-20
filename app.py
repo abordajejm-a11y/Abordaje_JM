@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Welcome to my first API!"
+    return "Welcome to my first API! An Activty created for System Integration (IT 3120)"
 
 @app.route('/student')
 def get_student():
