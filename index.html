@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student API Interface</title>
+</head>
+<body>
+    <h1>Student API Interface</h1>
+    <button onclick="loadStudent()">Load Student Information</button>
+    <div id="result"></div>
+
+    <script>
+    function loadStudent() {
+        fetch('/student')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML =
+                    '<p><b>Student ID:</b> ' + data.student_id + '</p>' +
+                    '<p><b>Name:</b> ' + data.name + '</p>' +
+                    '<p><b>Program:</b> ' + data.program + '</p>' +
+                    '<p><b>Year:</b> ' + data.year + '</p>' +
+                    '<p><b>Section:</b> ' + data.section + '</p>';
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML =
+                    '<p>Unable to retrieve data.</p>';
+            });
+    }
+    </script>
+</body>
+</html>
