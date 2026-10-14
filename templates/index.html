@@ -17,8 +17,8 @@
         input {
             padding: 8px;
         }
-        #result {
-            margin-top: 20px;
+        #result, #customResult {
+            margin-top: 15px;
             padding: 10px;
             border: 1px solid #cccccc;
         }
@@ -34,6 +34,11 @@
     <input type="text" id="nameInput" placeholder="Enter your first name">
     <button onclick="sayHello()">Say Hello</button>
     <p id="greeting"></p>
+
+    <hr>
+    <h2>Custom API Endpoint</h2>
+    <button onclick="loadCustomData()">Load Custom Data</button>
+    <div id="customResult"></div>
 
     <script>
     function loadStudent() {
@@ -63,6 +68,18 @@
             .catch(error => {
                 document.getElementById('greeting').innerText =
                     'Unable to retrieve greeting.';
+            });
+    }
+
+    function loadCustomData() {
+        fetch('/my-custom-endpoint')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('customResult').innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('customResult').innerText =
+                    'Unable to retrieve custom data.';
             });
     }
     </script>
