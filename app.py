@@ -1,87 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Student API Interface</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 700px;
-            margin: 40px auto;
-            padding: 20px;
+from flask import Flask, jsonify, request, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/student')
+def get_student():
+    return jsonify({
+        "student_id": "2024-00111",
+        "name": "JM P. Abordaje",
+        "program": "BSIT",
+        "year": 3,
+        "section": "A"
+    })
+
+@app.route('/hello')
+def say_hello():
+    name = request.args.get('name', 'Student')
+    return jsonify({
+        "message": f"Hello, {name}!"
+    })
+
+@app.route('/grades')
+def grades():
+    student_id = request.args.get('student_id')
+
+    return jsonify({
+        "student_id": student_id,
+        "grades": {
+            "IT 3110": "1.25",
+            "IT 3120": "1.50",
+            "IT 3130": "1.25"
         }
-        button {
-            padding: 8px 14px;
-            margin: 5px;
-            cursor: pointer;
-        }
-        input {
-            padding: 8px;
-        }
-        #result, #customResult {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #cccccc;
-        }
-    </style>
-</head>
-<body>
-    <h1>Student API Interface</h1>
-    <button onclick="loadStudent()">Load Student Information</button>
-    <div id="result"></div>
+    })
 
-    <hr>
-    <h2>Greeting API</h2>
-    <input type="text" id="nameInput" placeholder="Enter your first name">
-    <button onclick="sayHello()">Say Hello</button>
-    <p id="greeting"></p>
-
-    <hr>
-    <h2>Custom API Endpoint</h2>
-    <button onclick="loadCustomData()">Load Custom Data</button>
-    <div id="customResult"></div>
-
-    <script>
-    function loadStudent() {
-        fetch('/student')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('result').innerHTML =
-                    '<p><b>Student ID:</b> ' + data.student_id + '</p>' +
-                    '<p><b>Name:</b> ' + data.name + '</p>' +
-                    '<p><b>Program:</b> ' + data.program + '</p>' +
-                    '<p><b>Year:</b> ' + data.year + '</p>' +
-                    '<p><b>Section:</b> ' + data.section + '</p>';
-            })
-            .catch(error => {
-                document.getElementById('result').innerHTML =
-                    '<p>Unable to retrieve data.</p>';
-            });
-    }
-
-    function sayHello() {
-        const name = document.getElementById('nameInput').value;
-        fetch('/hello?name=' + encodeURIComponent(name))
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('greeting').innerText = data.message;
-            })
-            .catch(error => {
-                document.getElementById('greeting').innerText =
-                    'Unable to retrieve greeting.';
-            });
-    }
-
-    function loadCustomData() {
-        fetch('/my-custom-endpoint')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('customResult').innerText = JSON.stringify(data, null, 2);
-            })
-            .catch(error => {
-                document.getElementById('customResult').innerText =
-                    'Unable to retrieve custom data.';
-            });
-    }
-    </script>
-</body>
-</html>
+if __name__ == '__main__':
+    app.run(debug=True)

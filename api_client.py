@@ -4,7 +4,10 @@ student_id = input("Enter your Student ID: ")
 
 url = "https://abordaje-jm.onrender.com/grades"
 
-response = requests.get(url)
+response = requests.get(
+    url,
+    params={"student_id": student_id}
+)
 
 if response.status_code == 200:
     data = response.json()
