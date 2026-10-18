@@ -1,239 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student API Interface</title>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #f5f7fa;
-            color: #333;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            text-align: center;
-            color: #1f2937;
-            margin-bottom: 30px;
-        }
-
-        h2 {
-            color: #374151;
-            margin-bottom: 12px;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid #e5e7eb;
-            margin: 25px 0;
-        }
-
-        input {
-            width: 100%;
-            max-width: 320px;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #2563eb;
-        }
-
-        button {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: 0.2s;
-        }
-
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        .card {
-            margin-top: 15px;
-            padding: 16px;
-            background: #f9fafb;
-            border-radius: 10px;
-            border-left: 4px solid #2563eb;
-        }
-
-        .card h3 {
-            margin-bottom: 10px;
-            color: #1f2937;
-        }
-
-        p {
-            margin: 6px 0;
-        }
-
-        ul {
-            margin-top: 10px;
-            padding-left: 20px;
-        }
-
-        li {
-            margin-bottom: 5px;
-        }
-
-        #greeting {
-            margin-top: 12px;
-            color: #2563eb;
-            font-weight: 600;
-        }
-    </style>
+<title>Student API Interface</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: #333;
+        line-height: 1.5;
+    }
+    h1 { text-align: center; }
+    hr { margin: 24px 0; border: none; border-top: 1px solid #ddd; }
+    input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 4px;
+        background: #2563eb;
+        color: #fff;
+        cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    #greeting { font-weight: bold; color: #2563eb; }
+</style>
 </head>
 <body>
 
-    <div class="container">
+<h1>Student API Interface</h1>
 
-        <h1>Student API Interface</h1>
+<button onclick="loadStudent()">Load Student Information</button>
+<div id="result"></div>
 
-        <h2>Student Information API</h2>
+<hr>
 
-        <button onclick="loadStudent()">
-            Load Student Information
-        </button>
+<h2>Greeting API</h2>
+<input type="text" id="nameInput" placeholder="Enter your first name">
+<button onclick="sayHello()">Say Hello</button>
+<p id="greeting"></p>
 
-        <div id="result"></div>
+<hr>
 
-        <hr>
+<h2>Grades API</h2>
+<input type="text" id="studentIdInput" placeholder="Enter Student ID">
+<button onclick="loadGrades()">View Grades</button>
+<div id="gradesResult"></div>
 
-        <h2>Greeting API</h2>
+<hr>
 
-        <input
-            type="text"
-            id="nameInput"
-            placeholder="Enter your first name">
+<h2>Students from Database</h2>
+<button onclick="loadStudents()">Load Students</button>
+<div id="studentList"></div>
 
-        <br>
+<hr>
 
-        <button onclick="sayHello()">
-            Say Hello
-        </button>
+<h2>Students by Program</h2>
 
-        <p id="greeting"></p>
+<input
+    type="text"
+    id="programInput"
+    placeholder="Enter Program">
 
-        <hr>
+<button onclick="loadProgramStudents()">
+    Search Program
+</button>
 
-        <h2>Grades API</h2>
+<div id="programResult"></div>
 
-        <input
-            type="text"
-            id="studentIdInput"
-            placeholder="Enter Student ID">
+<script>
+function loadStudent() {
+    fetch('/students/2024-00329')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('result').innerHTML =
+                '<p><b>Student ID:</b> ' + data.student_id + '</p>' +
+                '<p><b>Name:</b> ' + data.name + '</p>' +
+                '<p><b>Program:</b> ' + data.program + '</p>' +
+                '<p><b>Year:</b> ' + data.year + '</p>' +
+                '<p><b>Section:</b> ' + data.section + '</p>';
+        })
+        .catch(error => {
+            document.getElementById('result').innerHTML =
+                '<p>Unable to retrieve data.</p>';
+        });
+}
 
-        <br>
+function sayHello() {
+    const name = document.getElementById('nameInput').value;
+    fetch('/hello?name=' + encodeURIComponent(name))
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('greeting').innerText = data.message;
+        })
+        .catch(error => {
+            document.getElementById('greeting').innerText =
+                'Unable to retrieve greeting.';
+        });
+}
 
-        <button onclick="loadGrades()">
-            View Grades
-        </button>
+function loadGrades() {
+    const studentId = document.getElementById('studentIdInput').value;
+    fetch('/grades?student_id=' + encodeURIComponent(studentId))
+        .then(response => response.json())
+        .then(data => {
+            let html = '<h3>Student Grades</h3>' +
+                       '<p><b>Student ID:</b> ' + data.student_id + '</p><ul>';
+            for (const subject in data.grades) {
+                html += '<li><b>' + subject + '</b>: ' + data.grades[subject] + '</li>';
+            }
+            html += '</ul>';
+            document.getElementById('gradesResult').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('gradesResult').innerHTML =
+                '<p>Unable to retrieve grades.</p>';
+        });
+}
 
-        <div id="gradesResult"></div>
+function loadStudents() {
+    fetch('/students')
+        .then(response => response.json())
+        .then(data => {
+            let output = '';
+            data.forEach(student => {
+                output +=
+                    '<p>' +
+                    '<b>' + student.student_id + '</b> - ' +
+                    student.name + ' | ' +
+                    student.program + ' | Year ' +
+                    student.year + ' | Section ' +
+                    student.section +
+                    '</p>';
+            });
+            document.getElementById('studentList').innerHTML = output;
+        })
+        .catch(error => {
+            document.getElementById('studentList').innerHTML =
+                '<p>Unable to retrieve students.</p>';
+        });
+}
 
-    </div>
+function loadProgramStudents() {
 
-    <script>
-        function loadStudent() {
-            fetch('/student')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('result').innerHTML = `
-                        <div class="card">
-                            <h3>Student Information</h3>
-                            <p><b>Student ID:</b> ${data.student_id}</p>
-                            <p><b>Name:</b> ${data.name}</p>
-                            <p><b>Program:</b> ${data.program}</p>
-                            <p><b>Year:</b> ${data.year}</p>
-                            <p><b>Section:</b> ${data.section}</p>
-                        </div>
-                    `;
-                })
-                .catch(error => {
-                    document.getElementById('result').innerHTML =
-                        '<div class="card">Unable to retrieve student information.</div>';
-                    console.error(error);
-                });
-        }
+    const program =
+        document.getElementById("programInput").value;
 
-        function sayHello() {
-            const name = document.getElementById('nameInput').value;
+    fetch('/students/program/' + encodeURIComponent(program))
+        .then(response => response.json())
+        .then(data => {
 
-            fetch('/hello?name=' + encodeURIComponent(name))
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('greeting').innerText =
-                        data.message;
-                })
-                .catch(error => {
-                    document.getElementById('greeting').innerText =
-                        'Unable to retrieve greeting.';
-                    console.error(error);
-                });
-        }
+            let output = '<div class="card">';
 
-        function loadGrades() {
-            const studentId =
-                document.getElementById('studentIdInput').value;
+            data.forEach(student => {
+                output += `
+                    <p>
+                        <b>${student.student_id}</b> -
+                        ${student.name}
+                        | Year ${student.year}
+                        | Section ${student.section}
+                    </p>
+                `;
+            });
 
-            fetch('/grades?student_id=' + encodeURIComponent(studentId))
-                .then(response => response.json())
-                .then(data => {
+            output += '</div>';
 
-                    let html = `
-                        <div class="card">
-                            <h3>Student Grades</h3>
-                            <p><b>Student ID:</b> ${data.student_id}</p>
-                            <ul>
-                    `;
+            document.getElementById('programResult').innerHTML =
+                output;
+        })
+        .catch(error => {
 
-                    for (const subject in data.grades) {
-                        html += `
-                            <li>
-                                <b>${subject}</b>: ${data.grades[subject]}
-                            </li>
-                        `;
-                    }
+            document.getElementById('programResult').innerHTML =
+                '<p>Unable to retrieve records.</p>';
+        });
+}
 
-                    html += `
-                            </ul>
-                        </div>
-                    `;
+</script>
 
-                    document.getElementById('gradesResult').innerHTML = html;
-                })
-                .catch(error => {
-                    document.getElementById('gradesResult').innerHTML =
-                        '<div class="card">Unable to retrieve grades.</div>';
-                    console.error(error);
-                });
-        }
-    </script>
 
 </body>
 </html>
