@@ -1,186 +1,247 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Student API Interface</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        max-width: 700px;
-        margin: 40px auto;
-        padding: 0 20px;
-        color: #333;
-        line-height: 1.5;
-    }
-    h1 { text-align: center; }
-    hr { margin: 24px 0; border: none; border-top: 1px solid #ddd; }
-    input {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    button {
-        padding: 8px 14px;
-        border: none;
-        border-radius: 4px;
-        background: #2563eb;
-        color: #fff;
-        cursor: pointer;
-    }
-    button:hover { background: #1d4ed8; }
-    #greeting { font-weight: bold; color: #2563eb; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student API Interface</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1, h2 {
+            color: #2563eb;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .card {
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Student API Interface</h1>
+    <h1>Student API Interface</h1>
 
-<button onclick="loadStudent()">Load Student Information</button>
-<div id="result"></div>
+    <!-- ADD STUDENT -->
+    <div class="section">
+        <h2>Add Student</h2>
 
-<hr>
+        <input type="text" id="student_id" placeholder="Student ID">
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="program" placeholder="Program">
+        <input type="number" id="year" placeholder="Year">
+        <input type="text" id="section" placeholder="Section">
 
-<h2>Greeting API</h2>
-<input type="text" id="nameInput" placeholder="Enter your first name">
-<button onclick="sayHello()">Say Hello</button>
-<p id="greeting"></p>
+        <button onclick="addStudent()">
+            Add Student
+        </button>
 
-<hr>
+        <p id="addResult"></p>
+    </div>
 
-<h2>Grades API</h2>
-<input type="text" id="studentIdInput" placeholder="Enter Student ID">
-<button onclick="loadGrades()">View Grades</button>
-<div id="gradesResult"></div>
+    <!-- SEARCH STUDENT -->
+    <div class="section">
+        <h2>Search Student by Student ID</h2>
 
-<hr>
+        <input
+            type="text"
+            id="searchId"
+            placeholder="Enter Student ID (e.g. 2024-00329)"
+        >
 
-<h2>Students from Database</h2>
-<button onclick="loadStudents()">Load Students</button>
-<div id="studentList"></div>
+        <button onclick="getStudent()">
+            Search Student
+        </button>
 
-<hr>
+        <div id="studentResult"></div>
+    </div>
 
-<h2>Students by Program</h2>
+    <!-- LOAD ALL STUDENTS -->
+    <div class="section">
+        <h2>All Students</h2>
 
-<input
-    type="text"
-    id="programInput"
-    placeholder="Enter Program">
+        <button onclick="loadStudents()">
+            Load Students
+        </button>
 
-<button onclick="loadProgramStudents()">
-    Search Program
-</button>
+        <div id="studentList"></div>
+    </div>
 
-<div id="programResult"></div>
+    <script>
 
-<script>
-function loadStudent() {
-    fetch('/students/2024-00329')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('result').innerHTML =
-                '<p><b>Student ID:</b> ' + data.student_id + '</p>' +
-                '<p><b>Name:</b> ' + data.name + '</p>' +
-                '<p><b>Program:</b> ' + data.program + '</p>' +
-                '<p><b>Year:</b> ' + data.year + '</p>' +
-                '<p><b>Section:</b> ' + data.section + '</p>';
-        })
-        .catch(error => {
-            document.getElementById('result').innerHTML =
-                '<p>Unable to retrieve data.</p>';
-        });
-}
+        function addStudent() {
 
-function sayHello() {
-    const name = document.getElementById('nameInput').value;
-    fetch('/hello?name=' + encodeURIComponent(name))
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('greeting').innerText = data.message;
-        })
-        .catch(error => {
-            document.getElementById('greeting').innerText =
-                'Unable to retrieve greeting.';
-        });
-}
+            const studentData = {
+                student_id: document.getElementById('student_id').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                program: document.getElementById('program').value.trim(),
+                year: document.getElementById('year').value.trim(),
+                section: document.getElementById('section').value.trim()
+            };
 
-function loadGrades() {
-    const studentId = document.getElementById('studentIdInput').value;
-    fetch('/grades?student_id=' + encodeURIComponent(studentId))
-        .then(response => response.json())
-        .then(data => {
-            let html = '<h3>Student Grades</h3>' +
-                       '<p><b>Student ID:</b> ' + data.student_id + '</p><ul>';
-            for (const subject in data.grades) {
-                html += '<li><b>' + subject + '</b>: ' + data.grades[subject] + '</li>';
+            if (
+                !studentData.student_id ||
+                !studentData.name ||
+                !studentData.program ||
+                !studentData.year ||
+                !studentData.section
+            ) {
+                document.getElementById('addResult').innerHTML =
+                    '<span class="error">Please fill in all fields.</span>';
+                return;
             }
-            html += '</ul>';
-            document.getElementById('gradesResult').innerHTML = html;
-        })
-        .catch(error => {
-            document.getElementById('gradesResult').innerHTML =
-                '<p>Unable to retrieve grades.</p>';
-        });
-}
 
-function loadStudents() {
-    fetch('/students')
-        .then(response => response.json())
-        .then(data => {
-            let output = '';
-            data.forEach(student => {
-                output +=
-                    '<p>' +
-                    '<b>' + student.student_id + '</b> - ' +
-                    student.name + ' | ' +
-                    student.program + ' | Year ' +
-                    student.year + ' | Section ' +
-                    student.section +
-                    '</p>';
+            fetch('/api/students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(studentData)
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                document.getElementById('addResult').innerHTML =
+                    `<span class="success">${data.message} (ID: ${data.id})</span>`;
+
+                document.getElementById('student_id').value = '';
+                document.getElementById('name').value = '';
+                document.getElementById('program').value = '';
+                document.getElementById('year').value = '';
+                document.getElementById('section').value = '';
+            })
+            .catch(error => {
+
+                document.getElementById('addResult').innerHTML =
+                    '<span class="error">Error adding student.</span>';
             });
-            document.getElementById('studentList').innerHTML = output;
-        })
-        .catch(error => {
-            document.getElementById('studentList').innerHTML =
-                '<p>Unable to retrieve students.</p>';
-        });
-}
+        }
 
-function loadProgramStudents() {
 
-    const program =
-        document.getElementById("programInput").value;
+        function getStudent() {
 
-    fetch('/students/program/' + encodeURIComponent(program))
-        .then(response => response.json())
-        .then(data => {
+            const studentId =
+                document.getElementById('searchId').value.trim();
 
-            let output = '<div class="card">';
+            if (!studentId) {
 
-            data.forEach(student => {
-                output += `
-                    <p>
-                        <b>${student.student_id}</b> -
-                        ${student.name}
-                        | Year ${student.year}
-                        | Section ${student.section}
-                    </p>
+                document.getElementById('studentResult').innerHTML =
+                    '<p class="error">Please enter a Student ID.</p>';
+
+                return;
+            }
+
+            fetch('/api/studentid/' + encodeURIComponent(studentId))
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error('Student not found');
+                }
+
+                return response.json();
+            })
+            .then(student => {
+
+                document.getElementById('studentResult').innerHTML = `
+                    <div class="card">
+                        <p><strong>Database ID:</strong> ${student.id}</p>
+                        <p><strong>Student ID:</strong> ${student.student_id}</p>
+                        <p><strong>Name:</strong> ${student.name}</p>
+                        <p><strong>Program:</strong> ${student.program}</p>
+                        <p><strong>Year:</strong> ${student.year}</p>
+                        <p><strong>Section:</strong> ${student.section}</p>
+                    </div>
                 `;
+            })
+            .catch(error => {
+
+                document.getElementById('studentResult').innerHTML =
+                    '<p class="error">Student not found.</p>';
             });
+        }
 
-            output += '</div>';
 
-            document.getElementById('programResult').innerHTML =
-                output;
-        })
-        .catch(error => {
+        function loadStudents() {
 
-            document.getElementById('programResult').innerHTML =
-                '<p>Unable to retrieve records.</p>';
-        });
-}
+            fetch('/api/students')
+            .then(response => response.json())
+            .then(data => {
 
-</script>
+                let output = '';
 
+                data.forEach(student => {
+
+                    output += `
+                        <div class="card">
+                            <p>
+                                <strong>${student.student_id}</strong>
+                                - ${student.name}
+                            </p>
+
+                            <p>
+                                ${student.program}
+                                | Year ${student.year}
+                                | Section ${student.section}
+                            </p>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('studentList').innerHTML =
+                    output;
+            })
+            .catch(error => {
+
+                document.getElementById('studentList').innerHTML =
+                    '<p class="error">Unable to load students.</p>';
+            });
+        }
+
+    </script>
 
 </body>
 </html>
