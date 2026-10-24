@@ -3,245 +3,926 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student API Interface</title>
+    <title>Student API Dashboard</title>
 
     <style>
+        :root {
+            --primary: #2457d6;
+            --primary-hover: #1d46b2;
+            --primary-soft: #edf2ff;
+            --text: #172033;
+            --muted: #667085;
+            --faint: #98a2b3;
+            --border: #e5e9f0;
+            --surface: #ffffff;
+            --page: #f6f8fc;
+            --success: #16803d;
+            --danger: #c43232;
+            --radius: 14px;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            color: #333;
+            margin: 0;
+            color: var(--text);
+            background: var(--page);
+            font: 15px/1.55 Inter, Arial, sans-serif;
         }
 
-        h1, h2 {
-            color: #2563eb;
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 36px 24px 48px;
         }
 
-        input {
-            padding: 10px;
-            margin: 5px 0;
-            width: 100%;
-            box-sizing: border-box;
+        h1, h2, h3, p { margin-top: 0; }
+
+        /* ---------- Header ---------- */
+        .eyebrow {
+            margin: 0 0 6px;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin-bottom: 6px;
+            font-size: clamp(1.8rem, 3vw, 2.35rem);
+            line-height: 1.2;
+            letter-spacing: -0.04em;
+        }
+        .subtitle { margin: 0; color: var(--muted); }
+
+        /* ---------- Layout ---------- */
+        .group-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 32px 0 14px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .group-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
-        button {
-            padding: 10px 15px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: #1d4ed8;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            align-items: stretch;
         }
 
         .section {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: 0 2px 8px rgba(16, 24, 40, 0.025);
+        }
+        .section.wide { grid-column: 1 / -1; }
+
+        .section-head { margin-bottom: 16px; }
+        h2 {
+            margin: 0 0 2px;
+            font-size: 1.05rem;
+            line-height: 1.35;
+            letter-spacing: -0.01em;
         }
 
+        .tag {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #fff4e5;
+            color: #9a5b00;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            vertical-align: middle;
+        }
+
+        /* ---------- Controls ---------- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .controls input,
+        .controls select { flex: 1 1 200px; }
+
+        input, select {
+            display: block;
+            width: 100%;
+            min-height: 42px;
+            margin: 0;
+            padding: 10px 13px;
+            border: 1px solid #d8deea;
+            border-radius: 9px;
+            background: #fff;
+            color: var(--text);
+            font: inherit;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        input::placeholder { color: var(--faint); }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(36, 87, 214, .12);
+        }
+        select:disabled { background: #f2f4f8; color: var(--faint); cursor: not-allowed; }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            min-height: 42px;
+            margin: 0;
+            padding: 10px 16px;
+            border: 1px solid var(--primary);
+            border-radius: 9px;
+            background: var(--primary);
+            color: #fff;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+        }
+        button:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+        button:focus-visible { outline: 3px solid rgba(36, 87, 214, .25); outline-offset: 2px; }
+        button:disabled { opacity: .65; cursor: wait; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* ---------- Output area ---------- */
+        .output {
+            flex: 1;
+            margin-top: 16px;
+            min-width: 0;
+        }
+        .output[data-empty]:empty::before {
+            content: attr(data-empty);
+            display: block;
+            padding: 16px;
+            border: 1px dashed #d8deea;
+            border-radius: 10px;
+            color: var(--faint);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
+        .results[data-empty]:empty::before { grid-column: 1 / -1; }
+        .results > .status,
+        .results > .empty,
+        .results > .result-count { grid-column: 1 / -1; margin: 0; }
+
+        .result-count { color: var(--muted); font-size: 13px; }
+
+        /* ---------- Cards ---------- */
         .card {
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: #f9f9f9;
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fbfcfe;
+            overflow-wrap: anywhere;
+        }
+        .card p { margin: 0; }
+
+        .student {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .student[data-list] {
+            cursor: pointer;
+            transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+        .student[data-list]:hover,
+        .student[data-list]:focus-visible {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(36, 87, 214, .10);
+        }
+        .avatar {
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .student-body { min-width: 0; }
+        .student .name { font-weight: 700; line-height: 1.3; }
+        .student .sid { margin-bottom: 6px; color: var(--muted); font-size: 12px; }
+        .view-link {
+            display: block;
+            margin-top: 6px;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .success {
-            color: green;
+        .badge {
+            display: inline-block;
+            margin: 0 5px 4px 0;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: var(--primary-soft);
+            color: #2449a8;
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .error {
-            color: red;
+        .grades-card h3 { margin-bottom: 8px; font-size: .98rem; }
+        .grades { margin: 0; padding: 0; list-style: none; }
+        .grades li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .grades li:last-child { border-bottom: none; padding-bottom: 0; }
+        .grades .badge { margin: 0; }
+
+        .message { color: var(--success); font-weight: 600; }
+
+        /* ---------- Status ---------- */
+        .status { margin: 0; font-size: 14px; }
+        .success { color: var(--success); }
+        .error { color: var(--danger); }
+        .loading, .hint { color: var(--muted); }
+        .hint { margin: 10px 0 0; font-size: 13px; }
+        .empty {
+            padding: 16px;
+            border: 1px dashed #d8deea;
+            border-radius: 10px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* ---------- Details dialog ---------- */
+        dialog {
+            width: min(480px, calc(100vw - 32px));
+            padding: 0;
+            border: none;
+            border-radius: var(--radius);
+            color: var(--text);
+            box-shadow: 0 20px 60px rgba(16, 24, 40, .25);
+        }
+        dialog::backdrop { background: rgba(16, 24, 40, .45); }
+        .dialog-inner { padding: 24px; }
+        .dialog-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .dialog-head h2 { font-size: 1.2rem; margin: 0; }
+        .dialog-head .eyebrow { margin-bottom: 4px; }
+        .close-btn {
+            min-height: 34px;
+            width: 34px;
+            padding: 0;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--muted);
+            font-size: 20px;
+            line-height: 1;
+        }
+        .close-btn:hover { background: var(--page); border-color: var(--border); color: var(--text); }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .profile .avatar { flex-basis: 56px; width: 56px; height: 56px; font-size: 18px; }
+        .profile .name { font-size: 1.1rem; font-weight: 700; margin: 0; }
+        .profile .sid { color: var(--muted); font-size: 13px; margin: 0; }
+
+        .details { margin: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .details div {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .details div:last-child { border-bottom: none; }
+        .details dt { color: var(--muted); font-size: 13px; }
+        .details dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 760px) {
+            .page { padding: 24px 16px 36px; }
+            .grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+            .section { padding: 18px; }
+        }
+        @media (max-width: 420px) {
+            .controls button, .section > button { width: 100%; }
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
         }
     </style>
 </head>
 <body>
 
-    <h1>Student API Interface</h1>
+<div class="page">
 
-    <!-- ADD STUDENT -->
-    <div class="section">
-        <h2>Add Student</h2>
+    <header>
+        <p class="eyebrow">API Workspace</p>
+        <h1>Student API Dashboard</h1>
+        <p class="subtitle">Manage requests and view student records in one place.</p>
+    </header>
 
-        <input type="text" id="student_id" placeholder="Student ID">
-        <input type="text" id="name" placeholder="Name">
-        <input type="text" id="program" placeholder="Program">
-        <input type="number" id="year" placeholder="Year">
-        <input type="text" id="section" placeholder="Section">
+    <!-- ===================== LOOKUPS ===================== -->
+    <div class="group-title">Lookups</div>
+    <div class="grid">
 
-        <button onclick="addStudent()">
-            Add Student
-        </button>
+        <div class="section">
+            <div class="section-head">
+                <h2>Load Student Information</h2>
+            </div>
+            <div class="controls">
+                <button onclick="loadStudent()">Load Student Information</button>
+            </div>
+            <div id="result" class="output" data-empty="No student loaded yet."></div>
+        </div>
 
-        <p id="addResult"></p>
+        <div class="section">
+            <div class="section-head">
+                <h2>Search Student by Student ID</h2>
+            </div>
+            <div class="controls">
+                <input type="text" id="searchId" placeholder="Enter Student ID">
+                <button onclick="getStudent()">Search Student</button>
+            </div>
+            <div id="studentResult" class="output" data-empty="Search results will appear here."></div>
+        </div>
+
+        <div class="section">
+            <div class="section-head">
+                <h2>Grades API</h2>
+            </div>
+            <div class="controls">
+                <input type="text" id="studentIdInput" placeholder="Enter Student ID">
+                <button onclick="loadGrades()">View Grades</button>
+            </div>
+            <div id="gradesResult" class="output" data-empty="Grades will appear here."></div>
+        </div>
+
+        <div class="section">
+            <div class="section-head">
+                <h2>Greeting API</h2>
+            </div>
+            <div class="controls">
+                <input type="text" id="nameInput" placeholder="Enter your first name">
+                <button onclick="sayHello()">Say Hello</button>
+            </div>
+            <div id="greeting" class="output" data-empty="Your greeting will appear here."></div>
+        </div>
+
     </div>
 
-    <!-- SEARCH STUDENT -->
-    <div class="section">
-        <h2>Search Student by Student ID</h2>
+    <!-- ===================== CREATE ===================== -->
+    <div class="group-title">Create</div>
+    <div class="grid">
 
-        <input
-            type="text"
-            id="searchId"
-            placeholder="Enter Student ID (e.g. 2024-00329)"
-        >
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Add Student</h2>
+            </div>
+            <div class="form-grid">
+                <input type="text" id="student_id" placeholder="Student ID">
+                <input type="text" id="name" placeholder="Name">
+                <select id="program"><option value="" selected disabled>Program</option><option value="BSIT">BSIT</option><option value="BSHM">BSHM</option><option value="BSA">BSA</option><option value="BSO">BSO</option><option value="BSED">BSED</option><option value="BEED">BEED</option></select>
+                <select id="year"><option value="" selected disabled>Year</option><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option></select>
+                <select id="section"><option value="" selected disabled>Section</option><option value="A">Section A</option><option value="B">Section B</option><option value="C">Section C</option><option value="D">Section D</option></select>
+            </div>
+            <div class="controls">
+                <button onclick="addStudent()">Add Student</button>
+            </div>
+            <div id="addResult" class="output"></div>
+        </div>
 
-        <button onclick="getStudent()">
-            Search Student
-        </button>
-
-        <div id="studentResult"></div>
     </div>
 
-    <!-- LOAD ALL STUDENTS -->
-    <div class="section">
-        <h2>All Students</h2>
+    <!-- ===================== RECORDS ===================== -->
+    <div class="group-title">My Records</div>
+    <div class="grid">
 
-        <button onclick="loadStudents()">
-            Load Students
-        </button>
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Search My Records</h2>
+            </div>
+            <div class="controls">
+                <input type="text" id="recordSearch" placeholder="Type to search, e.g. Mary, BSIT, 2026-00125">
+                <button onclick="searchMyRecords()">Search</button>
+            </div>
+            <div id="searchResults" class="output results" data-empty="Search your records to see matching students."></div>
+        </div>
 
-        <div id="studentList"></div>
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Students from Database</h2>
+            </div>
+            <div class="controls">
+                <button onclick="loadDatabaseStudents()">Load Students</button>
+            </div>
+            <div id="databaseStudents" class="output results" data-empty="No students loaded yet."></div>
+        </div>
+
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Students by Program</h2>
+            </div>
+            <div class="controls">
+                <select id="programInput"><option value="" selected disabled>Select Program</option><option value="BSIT">BSIT</option><option value="BSHM">BSHM</option><option value="BSA">BSA</option><option value="BSO">BSO</option><option value="BSED">BSED</option><option value="BEED">BEED</option></select>
+                <button onclick="loadProgramStudents()">Search Program</button>
+            </div>
+            <div id="programResult" class="output results" data-empty="Search a program to see students."></div>
+        </div>
+
+        <div class="section wide">
+            <div class="section-head">
+                <h2>All Students (API)</h2>
+            </div>
+            <div class="controls">
+                <button onclick="loadStudents()">Load Students</button>
+            </div>
+            <div id="studentList" class="output results" data-empty="No students loaded yet."></div>
+        </div>
+
     </div>
 
-    <script>
+    <!-- ===================== CLASSMATE ===================== -->
+    <div class="group-title">Classmate's Records</div>
+    <div class="grid">
 
-        function addStudent() {
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Classmate's Records <span class="tag">Read-only</span></h2>
+            </div>
+            <div class="controls">
+                <button onclick="loadClassmateRecords()">Load Classmate Records</button>
+                <select id="classmateSelect" onchange="selectClassmateRecord(this.value)" disabled>
+                    <option value="">Select a classmate record...</option>
+                </select>
+            </div>
+            <p class="hint">Source: maryjoydebaja.onrender.com (free hosting may take up to a minute to wake up). This data is only read, never changed.</p>
+            <div id="classmateRecords" class="output results" data-empty="No classmate records loaded yet."></div>
+        </div>
 
-            const studentData = {
-                student_id: document.getElementById('student_id').value.trim(),
-                name: document.getElementById('name').value.trim(),
-                program: document.getElementById('program').value.trim(),
-                year: document.getElementById('year').value.trim(),
-                section: document.getElementById('section').value.trim()
-            };
+    </div>
 
-            if (
-                !studentData.student_id ||
-                !studentData.name ||
-                !studentData.program ||
-                !studentData.year ||
-                !studentData.section
-            ) {
-                document.getElementById('addResult').innerHTML =
-                    '<span class="error">Please fill in all fields.</span>';
-                return;
-            }
+</div>
 
-            fetch('/api/students', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(studentData)
-            })
-            .then(response => response.json())
-            .then(data => {
+<!-- ===================== DETAILS DIALOG ===================== -->
+<dialog id="detailsDialog" aria-labelledby="detailsTitle">
+    <div class="dialog-inner">
+        <div class="dialog-head">
+            <div>
+                <p class="eyebrow" id="detailsSource"></p>
+                <h2 id="detailsTitle">Student Details</h2>
+            </div>
+            <button class="close-btn" onclick="closeDetails()" aria-label="Close">&times;</button>
+        </div>
+        <div id="detailsBody"></div>
+        <p class="hint" id="detailsNote"></p>
+    </div>
+</dialog>
 
-                document.getElementById('addResult').innerHTML =
-                    `<span class="success">${data.message} (ID: ${data.id})</span>`;
+<script>
 
-                document.getElementById('student_id').value = '';
-                document.getElementById('name').value = '';
-                document.getElementById('program').value = '';
-                document.getElementById('year').value = '';
-                document.getElementById('section').value = '';
-            })
-            .catch(error => {
+/* =========================
+   HELPERS
+========================= */
 
-                document.getElementById('addResult').innerHTML =
-                    '<span class="error">Error adding student.</span>';
-            });
+// Prevents HTML injection from API data
+function esc(value) {
+    const div = document.createElement('div');
+    div.textContent = value ?? '';
+    return div.innerHTML;
+}
+
+// fetch that throws on HTTP errors and returns parsed JSON
+async function getJSON(url, options) {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        throw new Error('Server responded with status ' + response.status);
+    }
+    return response.json();
+}
+
+function showLoading(id, text = 'Loading...') {
+    document.getElementById(id).innerHTML =
+        `<p class="status loading">${esc(text)}</p>`;
+}
+
+function showError(id, message) {
+    document.getElementById(id).innerHTML =
+        `<p class="status error">${esc(message)}</p>`;
+}
+
+function initials(name) {
+    const parts = String(name ?? '?').trim().split(/\s+/);
+    const first = parts[0] ? parts[0][0] : '?';
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+    return (first + last).toUpperCase();
+}
+
+/* Records currently displayed, keyed by the id of the list that shows them.
+   Cards point back to this by (list id, index) so details can be opened. */
+const records = {};
+const REMOTE_LIST = 'classmateRecords';
+
+// One card layout used everywhere a student is shown
+function studentCard(s, listId, index) {
+    return `
+        <div class="card student" data-list="${listId}" data-index="${index}"
+             tabindex="0" role="button" aria-label="View details for ${esc(s.name)}">
+            <div class="avatar">${esc(initials(s.name))}</div>
+            <div class="student-body">
+                <p class="name">${esc(s.name)}</p>
+                <p class="sid">${esc(s.student_id)}</p>
+                <span class="badge">${esc(s.program)}</span>
+                <span class="badge">Year ${esc(s.year)}</span>
+                <span class="badge">Section ${esc(s.section)}</span>
+                <span class="view-link">View details &rarr;</span>
+            </div>
+        </div>
+    `;
+}
+
+// Show a single student (wrapped as a one-item list so it is clickable too)
+function renderSingle(id, student) {
+    records[id] = [student];
+    document.getElementById(id).innerHTML = studentCard(student, id, 0);
+}
+
+function renderList(id, data) {
+    const el = document.getElementById(id);
+    if (!Array.isArray(data) || data.length === 0) {
+        records[id] = [];
+        el.innerHTML = '<div class="empty">No records found.</div>';
+        return;
+    }
+    records[id] = data;
+    el.innerHTML =
+        `<div class="result-count">${data.length} record${data.length === 1 ? '' : 's'}</div>` +
+        data.map((s, i) => studentCard(s, id, i)).join('');
+}
+
+// Press Enter in any input to trigger its section's button
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const btn = input.closest('.section').querySelector('button');
+            if (btn) btn.click();
         }
+    });
+});
 
+/* =========================
+   DETAILS VIEW
+========================= */
 
-        function getStudent() {
+const dialog = document.getElementById('detailsDialog');
 
-            const studentId =
-                document.getElementById('searchId').value.trim();
+const FIELD_LABELS = {
+    id: 'Record ID',
+    student_id: 'Student ID',
+    name: 'Name',
+    program: 'Program',
+    year: 'Year',
+    section: 'Section'
+};
+const FIELD_ORDER = ['id', 'student_id', 'name', 'program', 'year', 'section'];
 
-            if (!studentId) {
+function prettyLabel(key) {
+    return FIELD_LABELS[key] ||
+        key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
-                document.getElementById('studentResult').innerHTML =
-                    '<p class="error">Please enter a Student ID.</p>';
+function renderDetails(s, isRemote) {
+    const extraKeys = Object.keys(s).filter(k => !FIELD_ORDER.includes(k));
+    const keys = FIELD_ORDER.filter(k => k in s).concat(extraKeys);
 
-                return;
-            }
+    document.getElementById('detailsBody').innerHTML = `
+        <div class="profile">
+            <div class="avatar">${esc(initials(s.name))}</div>
+            <div>
+                <p class="name">${esc(s.name)}</p>
+                <p class="sid">${esc(s.student_id)}</p>
+            </div>
+        </div>
+        <dl class="details">
+            ${keys.map(k => `
+                <div>
+                    <dt>${esc(prettyLabel(k))}</dt>
+                    <dd>${esc(typeof s[k] === 'object' ? JSON.stringify(s[k]) : s[k])}</dd>
+                </div>`).join('')}
+        </dl>
+    `;
+}
 
-            fetch('/api/studentid/' + encodeURIComponent(studentId))
-            .then(response => {
+async function openDetails(listId, index) {
+    const cached = (records[listId] || [])[index];
+    if (!cached) return;
 
-                if (!response.ok) {
-                    throw new Error('Student not found');
-                }
+    const isRemote = listId === REMOTE_LIST;
 
-                return response.json();
-            })
-            .then(student => {
+    document.getElementById('detailsSource').textContent =
+        isRemote ? "Classmate's record" : 'My record';
+    document.getElementById('detailsNote').textContent =
+        isRemote ? 'Read-only: this record belongs to your classmate and cannot be changed here.' : '';
 
-                document.getElementById('studentResult').innerHTML = `
-                    <div class="card">
-                        <p><strong>Database ID:</strong> ${student.id}</p>
-                        <p><strong>Student ID:</strong> ${student.student_id}</p>
-                        <p><strong>Name:</strong> ${student.name}</p>
-                        <p><strong>Program:</strong> ${student.program}</p>
-                        <p><strong>Year:</strong> ${student.year}</p>
-                        <p><strong>Section:</strong> ${student.section}</p>
-                    </div>
-                `;
-            })
-            .catch(error => {
+    renderDetails(cached, isRemote);
+    if (!dialog.open) dialog.showModal();
 
-                document.getElementById('studentResult').innerHTML =
-                    '<p class="error">Student not found.</p>';
-            });
+    // For my own records, refresh with the latest copy from my API.
+    // (Classmate data is never re-requested or modified; GET only.)
+    if (!isRemote && cached.id != null) {
+        try {
+            const fresh = await getJSON('/api/students/' + encodeURIComponent(cached.id));
+            if (dialog.open) renderDetails(fresh, false);
+        } catch (err) {
+            console.warn('Could not refresh details, showing loaded data:', err);
         }
+    }
+}
 
+function closeDetails() {
+    if (dialog.open) dialog.close();
+}
 
-        function loadStudents() {
+// Reset the classmate dropdown once the dialog closes
+dialog.addEventListener('close', () => {
+    document.getElementById('classmateSelect').value = '';
+});
 
-            fetch('/api/students')
-            .then(response => response.json())
-            .then(data => {
+// Click on the dark backdrop closes the dialog
+dialog.addEventListener('click', e => {
+    if (e.target === dialog) closeDetails();
+});
 
-                let output = '';
+// Click / keyboard activation of any student card
+document.addEventListener('click', e => {
+    const card = e.target.closest('.student[data-list]');
+    if (card) openDetails(card.dataset.list, Number(card.dataset.index));
+});
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest && e.target.closest('.student[data-list]');
+    if (card) {
+        e.preventDefault();
+        openDetails(card.dataset.list, Number(card.dataset.index));
+    }
+});
 
-                data.forEach(student => {
+/* =========================
+   OLD ENDPOINTS
+========================= */
 
-                    output += `
-                        <div class="card">
-                            <p>
-                                <strong>${student.student_id}</strong>
-                                - ${student.name}
-                            </p>
+async function loadStudent() {
+    showLoading('result');
+    try {
+        renderSingle('result', await getJSON('/students/2024-00329'));
+    } catch (err) {
+        showError('result', 'Unable to load student: ' + err.message);
+    }
+}
 
-                            <p>
-                                ${student.program}
-                                | Year ${student.year}
-                                | Section ${student.section}
-                            </p>
-                        </div>
-                    `;
-                });
+async function sayHello() {
+    const name = document.getElementById('nameInput').value;
+    const out = document.getElementById('greeting');
+    showLoading('greeting');
+    try {
+        const data = await getJSON('/hello?name=' + encodeURIComponent(name));
+        out.innerHTML = `<div class="card"><p class="message">${esc(data.message)}</p></div>`;
+    } catch (err) {
+        showError('greeting', err.message);
+    }
+}
 
-                document.getElementById('studentList').innerHTML =
-                    output;
-            })
-            .catch(error => {
-
-                document.getElementById('studentList').innerHTML =
-                    '<p class="error">Unable to load students.</p>';
-            });
+async function loadGrades() {
+    const studentId = document.getElementById('studentIdInput').value;
+    showLoading('gradesResult');
+    try {
+        const data = await getJSON('/grades?student_id=' + encodeURIComponent(studentId));
+        let html = `<div class="card grades-card"><h3>Grades for ${esc(data.student_id)}</h3><ul class="grades">`;
+        for (const subject in data.grades) {
+            html += `<li><strong>${esc(subject)}</strong><span class="badge">${esc(data.grades[subject])}</span></li>`;
         }
+        html += '</ul></div>';
+        document.getElementById('gradesResult').innerHTML = html;
+    } catch (err) {
+        showError('gradesResult', 'Unable to load grades: ' + err.message);
+    }
+}
 
-    </script>
+async function loadDatabaseStudents() {
+    showLoading('databaseStudents');
+    try {
+        renderList('databaseStudents', await getJSON('/students'));
+    } catch (err) {
+        showError('databaseStudents', 'Unable to load students: ' + err.message);
+    }
+}
+
+async function loadProgramStudents() {
+    const program = document.getElementById('programInput').value;
+    if (!program) {
+        showError('programResult', 'Please select a program.');
+        return;
+    }
+    showLoading('programResult');
+    try {
+        renderList('programResult',
+            await getJSON('/students/program/' + encodeURIComponent(program)));
+    } catch (err) {
+        showError('programResult', 'Unable to search program: ' + err.message);
+    }
+}
+
+/* =========================
+   NEW CRUD ENDPOINTS
+========================= */
+
+async function addStudent() {
+    const out = document.getElementById('addResult');
+    const fields = ['student_id', 'name', 'program', 'year', 'section'];
+    const studentData = {};
+    fields.forEach(f => studentData[f] = document.getElementById(f).value.trim());
+
+    if (Object.values(studentData).some(v => !v)) {
+        showError('addResult', 'Please fill in all fields.');
+        return;
+    }
+
+    try {
+        const data = await getJSON('/api/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData)
+        });
+        out.innerHTML = `<p class="status success">${esc(data.message)}</p>`;
+        fields.forEach(f => document.getElementById(f).value = '');
+    } catch (err) {
+        showError('addResult', err.message);
+    }
+}
+
+async function getStudent() {
+    const studentId = document.getElementById('searchId').value;
+    showLoading('studentResult');
+    try {
+        renderSingle('studentResult',
+            await getJSON('/api/studentid/' + encodeURIComponent(studentId)));
+    } catch (err) {
+        showError('studentResult', 'Student not found: ' + err.message);
+    }
+}
+
+async function loadStudents() {
+    showLoading('studentList');
+    try {
+        renderList('studentList', await getJSON('/api/students'));
+    } catch (err) {
+        showError('studentList', 'Unable to load students: ' + err.message);
+    }
+}
+
+/* =========================
+   SEARCH MY RECORDS
+========================= */
+
+let searchTimer;
+let searchCounter = 0;
+
+async function searchMyRecords() {
+    clearTimeout(searchTimer);
+    const query = document.getElementById('recordSearch').value.trim().toLowerCase();
+    const run = ++searchCounter;
+    showLoading('searchResults');
+
+    try {
+        const all = await getJSON('/api/students');
+        if (run !== searchCounter) return;   // a newer search replaced this one
+
+        const matches = query
+            ? all.filter(s => [s.name, s.student_id, s.program, s.year, s.section]
+                .some(v => String(v ?? '').toLowerCase().includes(query)))
+            : all;
+
+        renderList('searchResults', matches);
+    } catch (err) {
+        if (run === searchCounter) {
+            showError('searchResults', 'Unable to search records: ' + err.message);
+        }
+    }
+}
+
+// Search while typing (short delay so it doesn't fire on every keystroke)
+document.getElementById('recordSearch').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(searchMyRecords, 300);
+});
+
+/* =========================
+   CLASSMATE API (READ-ONLY)
+========================= */
+
+const CLASSMATE_API = 'https://maryjoydebaja.onrender.com/students';
+
+// Fallback: a route on your own Flask backend that fetches the classmate's
+// API server-side, where browsers don't enforce CORS.
+const CLASSMATE_PROXY = '/api/classmate-students';
+
+function populateClassmateSelect(data) {
+    const select = document.getElementById('classmateSelect');
+    select.innerHTML = '<option value="">Select a classmate record...</option>';
+
+    if (Array.isArray(data) && data.length) {
+        data.forEach((s, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${s.name} (${s.student_id})`;
+            select.appendChild(opt);
+        });
+        select.disabled = false;
+    } else {
+        select.disabled = true;
+    }
+}
+
+function selectClassmateRecord(value) {
+    if (value === '') return;
+    openDetails(REMOTE_LIST, Number(value));
+}
+
+async function loadClassmateRecords() {
+    const btn = document.querySelector('button[onclick="loadClassmateRecords()"]');
+    btn.disabled = true;
+    showLoading(REMOTE_LIST, "Loading... the classmate's server may be waking up, please wait.");
+
+    try {
+        let data;
+        try {
+            data = await getJSON(CLASSMATE_API);          // 1) direct GET
+        } catch (directError) {
+            console.warn('Direct call failed (likely CORS or server asleep):', directError);
+            data = await getJSON(CLASSMATE_PROXY);        // 2) GET via your backend
+        }
+        renderList(REMOTE_LIST, data);
+        populateClassmateSelect(data);
+    } catch (err) {
+        console.error(err);
+        records[REMOTE_LIST] = [];
+        populateClassmateSelect([]);
+        showError(REMOTE_LIST,
+            'Unable to load classmate records. Open the browser console (F12) for details.');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+</script>
 
 </body>
 </html>

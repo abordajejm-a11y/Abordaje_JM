@@ -1,4 +1,5 @@
 import sqlite3
+import requests
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
@@ -15,7 +16,97 @@ def home():
     return render_template('index.html')
 
 
-# GET ALL STUDENTS
+# =====================================
+# ORIGINAL ENDPOINTS
+# =====================================
+
+@app.route('/students')
+def get_students():
+
+    conn = get_db_connection()
+
+    students = conn.execute(
+        'SELECT * FROM students'
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify([
+        dict(student)
+        for student in students
+    ])
+
+
+@app.route('/students/<student_id>')
+def get_student(student_id):
+
+    conn = get_db_connection()
+
+    student = conn.execute(
+        'SELECT * FROM students WHERE student_id = ?',
+        (student_id,)
+    ).fetchone()
+
+    conn.close()
+
+    if student is None:
+        return jsonify({
+            "error": "Student not found"
+        }), 404
+
+    return jsonify(dict(student))
+
+
+@app.route('/hello')
+def hello():
+
+    name = request.args.get(
+        'name',
+        'Student'
+    )
+
+    return jsonify({
+        "message": f"Hello, {name}!"
+    })
+
+
+@app.route('/grades')
+def grades():
+
+    student_id = request.args.get('student_id')
+
+    return jsonify({
+        "student_id": student_id,
+        "grades": {
+            "IT 3110": "1.25",
+            "IT 3120": "1.50",
+            "IT 3130": "1.25"
+        }
+    })
+
+
+@app.route('/students/program/<program>')
+def get_students_by_program(program):
+
+    conn = get_db_connection()
+
+    students = conn.execute(
+        'SELECT * FROM students WHERE program = ?',
+        (program,)
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify([
+        dict(student)
+        for student in students
+    ])
+
+
+# =====================================
+# CRUD API
+# =====================================
+
 @app.route('/api/students', methods=['GET'])
 def get_all_students():
 
@@ -33,7 +124,6 @@ def get_all_students():
     ])
 
 
-# ADD STUDENT
 @app.route('/api/students', methods=['POST'])
 def add_student():
 
@@ -79,9 +169,8 @@ def add_student():
     }), 201
 
 
-# GET STUDENT BY DATABASE ID
 @app.route('/api/students/<int:id>', methods=['GET'])
-def get_student(id):
+def get_student_by_id(id):
 
     conn = get_db_connection()
 
@@ -100,7 +189,6 @@ def get_student(id):
     return jsonify(dict(student))
 
 
-# UPDATE STUDENT
 @app.route('/api/students/<int:id>', methods=['PUT'])
 def update_student(id):
 
@@ -114,6 +202,7 @@ def update_student(id):
     ).fetchone()
 
     if student is None:
+
         conn.close()
 
         return jsonify({
@@ -149,7 +238,6 @@ def update_student(id):
     })
 
 
-# DELETE STUDENT
 @app.route('/api/students/<int:id>', methods=['DELETE'])
 def delete_student(id):
 
@@ -161,6 +249,7 @@ def delete_student(id):
     ).fetchone()
 
     if student is None:
+
         conn.close()
 
         return jsonify({
@@ -180,7 +269,6 @@ def delete_student(id):
     })
 
 
-# SEARCH BY STUDENT ID (e.g., 2024-00329)
 @app.route('/api/studentid/<student_id>', methods=['GET'])
 def search_student_id(student_id):
 
@@ -200,20 +288,29 @@ def search_student_id(student_id):
 
     return jsonify(dict(student))
 
-@app.route('/api/students', methods=['GET'])
-def api_students():
-    conn = get_db_connection()
 
-    rows = conn.execute(
-        'SELECT * FROM students'
-    ).fetchall()
+# =====================================
+# CLASSMATE PROXY
+# =====================================
 
-    conn.close()
+@app.route('/api/classmate-students')
+def classmate_students():
 
-    return jsonify([
-        dict(row)
-        for row in rows
-    ])
+    try:
+        r = requests.get(
+            'https://maryjoydebaja.onrender.com/students',
+            timeout=60
+        )
+
+        r.raise_for_status()
+
+        return jsonify(r.json())
+
+    except requests.RequestException as e:
+        return jsonify({
+            "error": str(e)
+        }), 502
+
 
 if __name__ == '__main__':
     app.run(debug=True)
