@@ -348,6 +348,33 @@
         .details dt { color: var(--muted); font-size: 13px; }
         .details dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 
+        /* ---------- Card actions & edit/delete dialogs ---------- */
+        .card-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-sm { min-height: 32px; padding: 5px 12px; font-size: 13px; border-radius: 8px; }
+        .btn-secondary { background: #fff; color: var(--primary); }
+        .btn-secondary:hover { background: var(--primary-soft); color: var(--primary-hover); }
+        .btn-danger { background: var(--danger); border-color: var(--danger); }
+        .btn-danger:hover { background: #a82727; border-color: #a82727; }
+        .btn-outline-danger { background: #fff; color: var(--danger); border-color: #e7b4b4; }
+        .btn-outline-danger:hover { background: #fdeeee; color: #a82727; border-color: var(--danger); }
+
+        .edit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .edit-grid .full { grid-column: 1 / -1; }
+        .edit-grid label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+        .dialog-inner .status { margin-top: 12px; }
+        .dialog-inner > p { margin-bottom: 0; }
+
         /* ---------- Responsive ---------- */
         @media (max-width: 760px) {
             .page { padding: 24px 16px 36px; }
@@ -357,6 +384,8 @@
         @media (max-width: 420px) {
             .controls button, .section > button { width: 100%; }
             .form-grid { grid-template-columns: minmax(0, 1fr); }
+            .edit-grid { grid-template-columns: minmax(0, 1fr); }
+            .dialog-actions button { flex: 1; }
         }
     </style>
 </head>
@@ -527,6 +556,65 @@
     </div>
 </dialog>
 
+<!-- ===================== EDIT DIALOG ===================== -->
+<dialog id="editDialog" aria-labelledby="editTitle">
+    <div class="dialog-inner">
+        <div class="dialog-head">
+            <div>
+                <p class="eyebrow">My record</p>
+                <h2 id="editTitle">Edit Student</h2>
+            </div>
+            <button class="close-btn" onclick="closeEdit()" aria-label="Close">&times;</button>
+        </div>
+        <div class="edit-grid">
+            <div>
+                <label for="edit_student_id">Student ID</label>
+                <input type="text" id="edit_student_id">
+            </div>
+            <div>
+                <label for="edit_name">Name</label>
+                <input type="text" id="edit_name">
+            </div>
+            <div>
+                <label for="edit_program">Program</label>
+                <select id="edit_program"><option value="BSIT">BSIT</option><option value="BSHM">BSHM</option><option value="BSA">BSA</option><option value="BSO">BSO</option><option value="BSED">BSED</option><option value="BEED">BEED</option></select>
+            </div>
+            <div>
+                <label for="edit_year">Year</label>
+                <select id="edit_year"><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option></select>
+            </div>
+            <div class="full">
+                <label for="edit_section">Section</label>
+                <select id="edit_section"><option value="A">Section A</option><option value="B">Section B</option><option value="C">Section C</option><option value="D">Section D</option></select>
+            </div>
+        </div>
+        <div id="editStatus"></div>
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="closeEdit()">Cancel</button>
+            <button id="editSaveBtn" onclick="saveEdit()">Save Changes</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ===================== DELETE DIALOG ===================== -->
+<dialog id="deleteDialog" aria-labelledby="deleteTitle">
+    <div class="dialog-inner">
+        <div class="dialog-head">
+            <div>
+                <p class="eyebrow">My record</p>
+                <h2 id="deleteTitle">Delete Student?</h2>
+            </div>
+            <button class="close-btn" onclick="closeDelete()" aria-label="Close">&times;</button>
+        </div>
+        <p id="deleteMessage"></p>
+        <div id="deleteStatus"></div>
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="closeDelete()">Cancel</button>
+            <button id="deleteConfirmBtn" class="btn-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</dialog>
+
 <script>
 
 /* =========================
@@ -584,6 +672,11 @@ function studentCard(s, listId, index) {
                 <span class="badge">Year ${esc(s.year)}</span>
                 <span class="badge">Section ${esc(s.section)}</span>
                 <span class="view-link">View details &rarr;</span>
+                ${listId === 'searchResults' ? `
+                <div class="card-actions">
+                    <button class="btn-sm btn-secondary" data-action="edit">Edit</button>
+                    <button class="btn-sm btn-outline-danger" data-action="delete">Delete</button>
+                </div>` : ''}
             </div>
         </div>
     `;
@@ -704,10 +797,22 @@ dialog.addEventListener('click', e => {
 // Click / keyboard activation of any student card
 document.addEventListener('click', e => {
     const card = e.target.closest('.student[data-list]');
-    if (card) openDetails(card.dataset.list, Number(card.dataset.index));
+    if (!card) return;
+    const index = Number(card.dataset.index);
+
+    // Edit / Delete buttons on "Search My Records" cards
+    const action = e.target.closest('[data-action]');
+    if (action) {
+        if (action.dataset.action === 'edit') openEdit(index);
+        if (action.dataset.action === 'delete') openDelete(index);
+        return;
+    }
+
+    openDetails(card.dataset.list, index);
 });
 document.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target.closest && e.target.closest('[data-action]')) return;   // let the button handle it
     const card = e.target.closest && e.target.closest('.student[data-list]');
     if (card) {
         e.preventDefault();
@@ -863,6 +968,118 @@ document.getElementById('recordSearch').addEventListener('input', () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(searchMyRecords, 300);
 });
+
+/* =========================
+   EDIT & DELETE (MY RECORDS ONLY)
+   Only "Search My Records" cards have these buttons.
+   Classmate records never do, so they cannot be changed.
+========================= */
+
+const editDialog = document.getElementById('editDialog');
+const deleteDialog = document.getElementById('deleteDialog');
+let editingId = null;
+let deletingStudent = null;
+
+// Close any dialog by clicking its dark backdrop
+[editDialog, deleteDialog].forEach(d => {
+    d.addEventListener('click', e => { if (e.target === d) d.close(); });
+});
+
+// Select a value in a dropdown, adding it first if the list doesn't have it
+function setSelectValue(select, value) {
+    const v = String(value ?? '');
+    if (v && ![...select.options].some(o => o.value === v)) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        select.appendChild(opt);
+    }
+    select.value = v;
+}
+
+function openEdit(index) {
+    const s = (records.searchResults || [])[index];
+    if (!s) return;
+
+    editingId = s.id;
+    document.getElementById('edit_student_id').value = s.student_id ?? '';
+    document.getElementById('edit_name').value = s.name ?? '';
+    setSelectValue(document.getElementById('edit_program'), s.program);
+    setSelectValue(document.getElementById('edit_year'), s.year);
+    setSelectValue(document.getElementById('edit_section'), s.section);
+
+    document.getElementById('editStatus').innerHTML = '';
+    editDialog.showModal();
+}
+
+function closeEdit() {
+    if (editDialog.open) editDialog.close();
+}
+
+async function saveEdit() {
+    const data = {
+        student_id: document.getElementById('edit_student_id').value.trim(),
+        name: document.getElementById('edit_name').value.trim(),
+        program: document.getElementById('edit_program').value.trim(),
+        year: document.getElementById('edit_year').value.trim(),
+        section: document.getElementById('edit_section').value.trim()
+    };
+
+    if (Object.values(data).some(v => !v)) {
+        showError('editStatus', 'Please fill in all fields.');
+        return;
+    }
+
+    const btn = document.getElementById('editSaveBtn');
+    btn.disabled = true;
+    try {
+        await getJSON('/api/students/' + encodeURIComponent(editingId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        closeEdit();
+        await searchMyRecords();            // refresh the list with the saved changes
+    } catch (err) {
+        showError('editStatus', 'Unable to save changes: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function openDelete(index) {
+    const s = (records.searchResults || [])[index];
+    if (!s) return;
+
+    deletingStudent = s;
+    document.getElementById('deleteMessage').textContent =
+        `Delete ${s.name} (${s.student_id}) from your records? This cannot be undone.`;
+    document.getElementById('deleteStatus').innerHTML = '';
+    deleteDialog.showModal();
+}
+
+function closeDelete() {
+    if (deleteDialog.open) deleteDialog.close();
+}
+
+async function confirmDelete() {
+    if (!deletingStudent) return;
+
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    try {
+        await getJSON('/api/students/' + encodeURIComponent(deletingStudent.id), {
+            method: 'DELETE'
+        });
+        closeDelete();
+        deletingStudent = null;
+        await searchMyRecords();            // refresh the list without the deleted record
+    } catch (err) {
+        showError('deleteStatus', 'Unable to delete: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
 
 /* =========================
    CLASSMATE API (READ-ONLY)
