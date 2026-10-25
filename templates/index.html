@@ -166,6 +166,7 @@
         button:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
         button:focus-visible { outline: 3px solid rgba(36, 87, 214, .25); outline-offset: 2px; }
         button:disabled { opacity: .65; cursor: wait; }
+        button.is-saved:disabled { cursor: not-allowed; }   /* NEW: already-saved partner records */
 
         .form-grid {
             display: grid;
@@ -180,6 +181,7 @@
             margin-top: 16px;
             min-width: 0;
         }
+        .output:not([data-empty]):empty { display: none; }   /* no blank gap before a result exists */
         .output[data-empty]:empty::before {
             content: attr(data-empty);
             display: block;
@@ -217,8 +219,10 @@
 
         .student {
             display: flex;
+            flex-wrap: wrap;            /* actions drop to their own full-width row */
             align-items: flex-start;
-            gap: 12px;
+            column-gap: 12px;
+            row-gap: 10px;
         }
         .student[data-list] {
             cursor: pointer;
@@ -244,17 +248,18 @@
             font-size: 14px;
             font-weight: 700;
         }
-        .student-body { min-width: 0; }
+        .student-body { min-width: 0; flex: 1 1 0; }
         .student .name { font-weight: 700; line-height: 1.3; }
-        .student .sid { margin-bottom: 6px; color: var(--muted); font-size: 12px; }
+        .student .sid { margin-bottom: 8px; color: var(--muted); font-size: 12px; }
         .view-link {
             display: block;
-            margin-top: 6px;
+            margin-top: 8px;
             color: var(--primary);
             font-size: 12px;
             font-weight: 600;
         }
 
+        .badges { display: flex; flex-wrap: wrap; gap: 6px; }
         .badge {
             display: inline-block;
             margin: 0 5px 4px 0;
@@ -265,6 +270,7 @@
             font-size: 12px;
             font-weight: 600;
         }
+        .badges .badge { margin: 0; }
 
         .grades-card h3 { margin-bottom: 8px; font-size: .98rem; }
         .grades { margin: 0; padding: 0; list-style: none; }
@@ -349,14 +355,18 @@
         .details dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 
         /* ---------- Card actions & edit/delete dialogs ---------- */
-        .card-actions { display: flex; gap: 8px; margin-top: 10px; }
-        .btn-sm { min-height: 32px; padding: 5px 12px; font-size: 13px; border-radius: 8px; }
+        .card-actions { display: flex; gap: 8px; flex: 0 0 100%; }
+        .card-actions button { flex: 1 1 0; }
+        .card-actions .grow { flex: 2 1 0; }
+        .btn-sm { min-height: 34px; padding: 5px 12px; font-size: 13px; border-radius: 8px; }
         .btn-secondary { background: #fff; color: var(--primary); }
         .btn-secondary:hover { background: var(--primary-soft); color: var(--primary-hover); }
         .btn-danger { background: var(--danger); border-color: var(--danger); }
         .btn-danger:hover { background: #a82727; border-color: #a82727; }
         .btn-outline-danger { background: #fff; color: var(--danger); border-color: #e7b4b4; }
         .btn-outline-danger:hover { background: #fdeeee; color: #a82727; border-color: var(--danger); }
+        .card-status { flex: 0 0 100%; margin: 0 !important; font-size: 12px; font-weight: 600; }
+        .card-status:empty { display: none; }
 
         .edit-grid {
             display: grid;
@@ -374,6 +384,38 @@
         .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
         .dialog-inner .status { margin-top: 12px; }
         .dialog-inner > p { margin-bottom: 0; }
+
+        /* ---------- Integration dashboard ---------- */
+        .int-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .int-col {
+            min-width: 0;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--page);
+        }
+        .int-col h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
+        .int-col .output { margin-top: 12px; }
+        .int-col .results {
+            grid-template-columns: minmax(0, 1fr);
+            max-height: 640px;          /* long lists scroll inside the panel */
+            overflow-y: auto;
+        }
+        .int-col .card { background: #fff; }
+
+        .badge.src-local { background: #e8f6ee; color: #16803d; }
+        .badge.src-imported { background: #fff4e5; color: #9a5b00; }
+        .badge.src-partner { background: #f0eaff; color: #5b34b0; }
+
+        @media (max-width: 900px) {
+            .int-grid { grid-template-columns: minmax(0, 1fr); }
+            .int-col .results { max-height: 480px; }
+        }
 
         /* ---------- Responsive ---------- */
         @media (max-width: 760px) {
@@ -539,6 +581,37 @@
 
     </div>
 
+    <!-- ===================== INTEGRATION DASHBOARD ===================== -->
+    <div class="group-title">Integration</div>
+    <div class="grid">
+
+        <div class="section wide">
+            <div class="section-head">
+                <h2>Integration Dashboard</h2>
+            </div>
+            <div class="controls">
+                <button id="partnerLoadBtn" onclick="loadPartnerRecords()">Load Partner Records</button>
+                <button id="myDataBtn" class="btn-secondary" onclick="loadMyIntegration()">Refresh My Records</button>
+            </div>
+            <p class="hint">Load the partner's records, then use <strong>Save to My Database</strong> on one. It moves into <strong>Imported Records</strong> labeled with its source. A record that is already saved cannot be saved again.</p>
+            <div class="int-grid">
+                <div class="int-col">
+                    <h3>My Local Records</h3>
+                    <div id="localRecords" class="output results" data-empty="No local records yet."></div>
+                </div>
+                <div class="int-col">
+                    <h3>Imported Records</h3>
+                    <div id="importedRecords" class="output results" data-empty="No imported records yet."></div>
+                </div>
+                <div class="int-col">
+                    <h3>Partner Records</h3>
+                    <div id="partnerRecords" class="output results" data-empty="No partner records loaded yet."></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
 <!-- ===================== DETAILS DIALOG ===================== -->
@@ -632,7 +705,10 @@ function esc(value) {
 async function getJSON(url, options) {
     const response = await fetch(url, options);
     if (!response.ok) {
-        throw new Error('Server responded with status ' + response.status);
+        // Prefer the server's own error message when it sends one
+        let detail = '';
+        try { detail = (await response.json()).error || ''; } catch (_) {}
+        throw new Error(detail || 'Server responded with status ' + response.status);
     }
     return response.json();
 }
@@ -658,9 +734,20 @@ function initials(name) {
    Cards point back to this by (list id, index) so details can be opened. */
 const records = {};
 const REMOTE_LIST = 'classmateRecords';
+const PARTNER_LIST = 'partnerRecords';
 
 // One card layout used everywhere a student is shown
 function studentCard(s, listId, index) {
+    const isPartner = listId === PARTNER_LIST;
+
+    // Where this record comes from, shown on every card
+    const src = isPartner ? 'Partner API'
+        : listId === REMOTE_LIST ? 'Classmate API'
+        : (s.source || 'Local');
+    const srcClass = isPartner ? 'src-partner'
+        : listId === REMOTE_LIST ? 'src-partner'
+        : (src === 'Local' ? 'src-local' : 'src-imported');
+
     return `
         <div class="card student" data-list="${listId}" data-index="${index}"
              tabindex="0" role="button" aria-label="View details for ${esc(s.name)}">
@@ -668,16 +755,29 @@ function studentCard(s, listId, index) {
             <div class="student-body">
                 <p class="name">${esc(s.name)}</p>
                 <p class="sid">${esc(s.student_id)}</p>
-                <span class="badge">${esc(s.program)}</span>
-                <span class="badge">Year ${esc(s.year)}</span>
-                <span class="badge">Section ${esc(s.section)}</span>
-                <span class="view-link">View details &rarr;</span>
-                ${listId === 'searchResults' ? `
-                <div class="card-actions">
-                    <button class="btn-sm btn-secondary" data-action="edit">Edit</button>
-                    <button class="btn-sm btn-outline-danger" data-action="delete">Delete</button>
-                </div>` : ''}
+                <div class="badges">
+                    <span class="badge">${esc(s.program)}</span>
+                    <span class="badge">Year ${esc(s.year)}</span>
+                    <span class="badge">Section ${esc(s.section)}</span>
+                    <span class="badge ${srcClass}">Source: ${esc(src)}</span>
+                </div>
+                ${isPartner ? '' : '<span class="view-link">View details &rarr;</span>'}
             </div>
+            ${listId === 'searchResults' ? `
+            <div class="card-actions">
+                <button class="btn-sm btn-secondary" data-action="edit">Edit</button>
+                <button class="btn-sm btn-outline-danger" data-action="delete">Delete</button>
+            </div>` : ''}
+            ${listId === 'importedRecords' ? `
+            <div class="card-actions">
+                <button class="btn-sm btn-outline-danger" data-action="delete">Delete</button>
+            </div>` : ''}
+            ${isPartner ? `
+            <div class="card-actions">
+                <button class="btn-sm btn-secondary" data-action="view">View</button>
+                <button class="btn-sm grow" data-action="save">Save to My Database</button>
+            </div>
+            <p class="card-status" aria-live="polite"></p>` : ''}
         </div>
     `;
 }
@@ -699,6 +799,9 @@ function renderList(id, data) {
     el.innerHTML =
         `<div class="result-count">${data.length} record${data.length === 1 ? '' : 's'}</div>` +
         data.map((s, i) => studentCard(s, id, i)).join('');
+
+    // NEW: partner cards whose student is already in my database get a disabled Save button
+    if (id === PARTNER_LIST) syncPartnerSaveState();
 }
 
 // Press Enter in any input to trigger its section's button
@@ -758,18 +861,23 @@ async function openDetails(listId, index) {
     const cached = (records[listId] || [])[index];
     if (!cached) return;
 
-    const isRemote = listId === REMOTE_LIST;
+    const isPartner = listId === PARTNER_LIST;
+    const isRemote = listId === REMOTE_LIST || isPartner;
 
     document.getElementById('detailsSource').textContent =
-        isRemote ? "Classmate's record" : 'My record';
+        isPartner ? 'Partner record' : isRemote ? "Classmate's record" : 'My record';
     document.getElementById('detailsNote').textContent =
-        isRemote ? 'Read-only: this record belongs to your classmate and cannot be changed here.' : '';
+        isPartner
+            ? 'This record comes from the partner database. Use "Save to My Database" on its card to keep a copy.'
+            : isRemote
+                ? 'Read-only: this record belongs to your classmate and cannot be changed here.'
+                : '';
 
     renderDetails(cached, isRemote);
     if (!dialog.open) dialog.showModal();
 
     // For my own records, refresh with the latest copy from my API.
-    // (Classmate data is never re-requested or modified; GET only.)
+    // (Classmate and partner data is never re-requested or modified.)
     if (!isRemote && cached.id != null) {
         try {
             const fresh = await getJSON('/api/students/' + encodeURIComponent(cached.id));
@@ -800,11 +908,16 @@ document.addEventListener('click', e => {
     if (!card) return;
     const index = Number(card.dataset.index);
 
-    // Edit / Delete buttons on "Search My Records" cards
+    // Edit / Delete buttons on "Search My Records" cards,
+    // Delete button on "Imported Records" cards,
+    // View / Save buttons on "Partner Records" cards
     const action = e.target.closest('[data-action]');
     if (action) {
-        if (action.dataset.action === 'edit') openEdit(index);
-        if (action.dataset.action === 'delete') openDelete(index);
+        const type = action.dataset.action;
+        if (type === 'edit') openEdit(index);
+        if (type === 'delete') openDelete(index, card.dataset.list);
+        if (type === 'view') openDetails(card.dataset.list, index);
+        if (type === 'save') savePartnerRecord(index, action, card);
         return;
     }
 
@@ -901,13 +1014,15 @@ async function addStudent() {
     }
 
     try {
+        // Records added from this dashboard are local, not external
         const data = await getJSON('/api/students', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData)
+            body: JSON.stringify({ ...studentData, source: 'Local' })
         });
         out.innerHTML = `<p class="status success">${esc(data.message)}</p>`;
         fields.forEach(f => document.getElementById(f).value = '');
+        loadMyIntegration();                // keep the dashboard columns up to date
     } catch (err) {
         showError('addResult', err.message);
     }
@@ -971,14 +1086,16 @@ document.getElementById('recordSearch').addEventListener('input', () => {
 
 /* =========================
    EDIT & DELETE (MY RECORDS ONLY)
-   Only "Search My Records" cards have these buttons.
-   Classmate records never do, so they cannot be changed.
+   "Search My Records" cards have Edit and Delete; "Imported Records"
+   cards (saved from the partner) have Delete.
+   Classmate and Partner records never do, so they cannot be changed.
 ========================= */
 
 const editDialog = document.getElementById('editDialog');
 const deleteDialog = document.getElementById('deleteDialog');
 let editingId = null;
 let deletingStudent = null;
+let deletingList = 'searchResults';   // which list the record being deleted came from
 
 // Close any dialog by clicking its dark backdrop
 [editDialog, deleteDialog].forEach(d => {
@@ -1040,6 +1157,7 @@ async function saveEdit() {
         });
         closeEdit();
         await searchMyRecords();            // refresh the list with the saved changes
+        loadMyIntegration();
     } catch (err) {
         showError('editStatus', 'Unable to save changes: ' + err.message);
     } finally {
@@ -1047,13 +1165,16 @@ async function saveEdit() {
     }
 }
 
-function openDelete(index) {
-    const s = (records.searchResults || [])[index];
+function openDelete(index, listId = 'searchResults') {
+    const s = (records[listId] || [])[index];
     if (!s) return;
 
     deletingStudent = s;
+    deletingList = listId;
     document.getElementById('deleteMessage').textContent =
-        `Delete ${s.name} (${s.student_id}) from your records? This cannot be undone.`;
+        listId === 'importedRecords'
+            ? `Delete ${s.name} (${s.student_id}), saved from ${s.source || 'an outside source'}, from your records? This cannot be undone. You can save it again from Partner Records.`
+            : `Delete ${s.name} (${s.student_id}) from your records? This cannot be undone.`;
     document.getElementById('deleteStatus').innerHTML = '';
     deleteDialog.showModal();
 }
@@ -1071,9 +1192,15 @@ async function confirmDelete() {
         await getJSON('/api/students/' + encodeURIComponent(deletingStudent.id), {
             method: 'DELETE'
         });
+        const removed = deletingStudent;
         closeDelete();
         deletingStudent = null;
-        await searchMyRecords();            // refresh the list without the deleted record
+        // Refresh "Search My Records" if it has been used (it is always used for its own cards)
+        if (deletingList === 'searchResults' || records.searchResults !== undefined) {
+            await searchMyRecords();
+        }
+        await loadMyIntegration();          // Local / Imported columns + refreshes saved IDs
+        resetPartnerSave(removed.student_id);  // let the partner card be saved again
     } catch (err) {
         showError('deleteStatus', 'Unable to delete: ' + err.message);
     } finally {
@@ -1136,6 +1263,176 @@ async function loadClassmateRecords() {
             'Unable to load classmate records. Open the browser console (F12) for details.');
     } finally {
         btn.disabled = false;
+    }
+}
+
+/* =========================
+   PARTNER RECORDS
+   Partner Database -> Partner Flask API -> Internet
+   -> Your Flask Application (/partner-records) -> This page.
+   The page only talks to its own Flask app; the server fetches the
+   partner's API. "View" is read-only; "Save to My Database" copies the
+   record into my own database through POST /import-student.
+========================= */
+
+const PARTNER_ENDPOINT = '/partner-records';
+
+// NEW: Student IDs already stored in my database (used to block duplicate saves)
+const savedIds = new Set();
+const normId = v => String(v ?? '').trim().toLowerCase();
+
+// NEW: Disable "Save" on partner cards that are already in my database,
+// and re-enable it when the saved copy has been deleted.
+function syncPartnerSaveState() {
+    (records[PARTNER_LIST] || []).forEach((p, i) => {
+        const card = document.querySelector(
+            `.student[data-list="${PARTNER_LIST}"][data-index="${i}"]`);
+        if (!card) return;
+        const btn = card.querySelector('[data-action="save"]');
+        const status = card.querySelector('.card-status');
+        if (!btn || !status || btn.dataset.busy) return;   // skip a save in progress
+
+        if (savedIds.has(normId(p.student_id))) {
+            btn.disabled = true;
+            btn.classList.add('is-saved');
+            btn.textContent = 'Saved';
+            if (!status.textContent) {
+                status.className = 'card-status success';
+                status.textContent = 'Already in your database.';
+            }
+        } else if (btn.classList.contains('is-saved')) {
+            btn.disabled = false;
+            btn.classList.remove('is-saved');
+            btn.textContent = 'Save to My Database';
+            status.className = 'card-status';
+            status.textContent = '';
+        }
+    });
+}
+
+// Fill the local/imported columns as soon as the page opens
+window.addEventListener('DOMContentLoaded', () => loadMyIntegration());
+
+// Accept either a bare array or an object that wraps the array
+function extractRecords(data) {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') {
+        for (const key of ['students', 'records', 'data', 'results']) {
+            if (Array.isArray(data[key])) return data[key];
+        }
+    }
+    return [];
+}
+
+async function loadPartnerRecords() {
+    const btn = document.getElementById('partnerLoadBtn');
+    btn.disabled = true;
+    showLoading(PARTNER_LIST, 'Loading... the partner server may take a moment to respond.');
+
+    try {
+        const data = await getJSON(PARTNER_ENDPOINT);
+        renderList(PARTNER_LIST, extractRecords(data));
+    } catch (err) {
+        console.error(err);
+        records[PARTNER_LIST] = [];
+        showError(PARTNER_LIST, 'Unable to load partner records: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// My Local Records vs Imported Records, split by the "source" column
+async function loadMyIntegration() {
+    const btn = document.getElementById('myDataBtn');
+    btn.disabled = true;
+    showLoading('localRecords');
+    showLoading('importedRecords');
+
+    try {
+        const all = await getJSON('/api/students');
+
+        // NEW: remember which Student IDs are already saved
+        savedIds.clear();
+        all.forEach(s => savedIds.add(normId(s.student_id)));
+
+        const isLocal = s => !s.source || s.source === 'Local';
+        renderList('localRecords', all.filter(isLocal));
+        renderList('importedRecords', all.filter(s => !isLocal(s)));
+
+        syncPartnerSaveState();             // NEW: update the Partner Records buttons
+    } catch (err) {
+        showError('localRecords', 'Unable to load records: ' + err.message);
+        showError('importedRecords', 'Unable to load records: ' + err.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// After a saved record is deleted, re-enable its Save button in the Partner Records column
+function resetPartnerSave(studentId) {
+    (records[PARTNER_LIST] || []).forEach((p, i) => {
+        if (String(p.student_id) !== String(studentId)) return;
+        const card = document.querySelector(
+            `.student[data-list="${PARTNER_LIST}"][data-index="${i}"]`);
+        if (!card) return;
+        const btn = card.querySelector('[data-action="save"]');
+        const status = card.querySelector('.card-status');
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('is-saved');
+            btn.textContent = 'Save to My Database';
+        }
+        if (status) { status.className = 'card-status'; status.textContent = ''; }
+    });
+}
+
+async function savePartnerRecord(index, btn, card) {
+    const s = (records[PARTNER_LIST] || [])[index];
+    const status = card.querySelector('.card-status');
+    if (!s || !status || btn.disabled) return;   // NEW: ignore clicks on a disabled/saving button
+
+    const student = s;   // the selected partner record, sent as-is
+
+    const setStatus = (text, cls) => {
+        status.className = 'card-status ' + cls;
+        status.textContent = text;
+    };
+
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.dataset.busy = '1';
+    btn.textContent = 'Saving...';
+    setStatus('', '');
+
+    try {
+        // NEW: fresh duplicate check against my database right before saving
+        const mine = await getJSON('/api/students');
+        if (mine.some(m => normId(m.student_id) === normId(student.student_id))) {
+            savedIds.add(normId(student.student_id));
+            btn.classList.add('is-saved');
+            btn.textContent = 'Saved';
+            setStatus('This student is already in your database.', 'error');
+            loadMyIntegration();
+            return;
+        }
+
+        const data = await getJSON('/import-student', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(student)
+        });
+        savedIds.add(normId(student.student_id));
+        btn.classList.add('is-saved');
+        btn.textContent = 'Saved';           // stays disabled to prevent duplicate saves
+        setStatus((data && data.message) || 'Saved to your database.', 'success');
+        loadMyIntegration();                 // show it under Imported Records
+    } catch (err) {
+        // The server answers 409 for a duplicate; its message is shown here
+        btn.disabled = false;
+        btn.textContent = label;
+        setStatus('Unable to save: ' + err.message, 'error');
+    } finally {
+        delete btn.dataset.busy;
     }
 }
 

@@ -10,10 +10,19 @@ CREATE TABLE IF NOT EXISTS students (
     name TEXT NOT NULL,
     program TEXT NOT NULL,
     year INTEGER NOT NULL,
-    section TEXT NOT NULL
+    section TEXT NOT NULL,
+    source TEXT DEFAULT 'Local'
 )
 """)
 
+# Add the 'source' column if students.db was created by an older version
+# (CREATE TABLE IF NOT EXISTS does not change an existing table)
+columns = [row[1] for row in cursor.execute("PRAGMA table_info(students)")]
+if 'source' not in columns:
+    cursor.execute("ALTER TABLE students ADD COLUMN source TEXT DEFAULT 'Local'")
+    print("Added missing 'source' column.")
+
+# Clear existing records
 cursor.execute("DELETE FROM students")
 
 students = [
